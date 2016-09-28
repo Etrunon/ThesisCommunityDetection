@@ -20,14 +20,15 @@ will print:
 
 class ProgressBar:
 
-    def __init__(self, size, fraction=0.1):
+    def __init__(self, size, fraction=0.1, task_name=''):
         self.counter = 0
         self.threshold = size * fraction
         self.past_fraction = 0
         self.fraction = fraction
+        self.task_name = task_name
 
-    def update(self, update):
+    def update(self, update=1):
         self.counter += update
         if self.counter > self.threshold*(self.past_fraction+1):
             self.past_fraction += 1
-            log_print('Completed ' + str(self.fraction*self.past_fraction*100) + '%')
+            log_print('Completion ' + self.task_name + '\t' + str(self.fraction*self.past_fraction*100) + '%')

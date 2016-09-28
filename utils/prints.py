@@ -4,7 +4,7 @@ from datetime import datetime
 def print_graph_csv(graph, name):
     # Writes a file.
     time = datetime.now()
-    out_file = open(name + " " + time.strftime('%d-%m-%Y %H:%M') + ".csv", "w")
+    out_file = open('Saves/' + name + " " + time.strftime('%d-%m-%Y %H:%M') + ".csv", "w")
     # out_file.write("This Text is going to out file\nLook at it and see\n")
     for node in graph.nodes():
         for neighbour in graph.neighbors(node):
@@ -21,6 +21,9 @@ def log_print(inp_str='', inp_obj=None):
     :return:
     """
     label = 'GraphOS: '
+    if inp_obj is None:
+        print(label + inp_str)
+        return
     try:
         print(label + inp_str + ' ' + inp_obj.__str__())
     except TypeError as e:

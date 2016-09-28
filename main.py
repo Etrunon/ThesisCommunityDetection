@@ -1,3 +1,5 @@
+import math
+
 import networkx as nx
 import pprint
 
@@ -72,6 +74,33 @@ def detect_conductance(graph, p_set):
     return results
 
 
+def detect_modularity(graph, p_set):
+    results = []
+    prg_bar = ProgressBar(size=len(p_set), fraction=0.01, task_name='Modularity')
+
+    edge_numb = len(graph.edges())
+
+    for community in p_set:
+
+        com_modularity = 0
+        for node in graph.node:
+            for another in graph.node:
+                if node != another:
+                    if graph.has_edge(node, another):
+                        edge = 1
+                    else:
+                        edge = 0
+
+                    if node in community and another in community:
+                        infra_value = edge - (graph.degree(node) * graph.degree(another)) / (2*edge_numb)
+                        com_modularity += infra_value
+
+        com_modularity = (1 / (4 * edge_numb) * com_modularity)
+        results.append((com_modularity, community))
+        prg_bar.update()
+    return results
+
+
 # ====================MAin
 def calc_conductance():
     # g1 = nx.barbell_graph(5, 2)
@@ -108,51 +137,58 @@ def calc_conductance():
 
 
 def calc_modularity():
-    # g1 = nx.barbell_graph(5, 2)
-    g1 = nx.gnp_random_graph(20, 0.15)
+    nodes = 40
+    # g1 = nx.barbell_graph(8, 1)
+    g1 = nx.gnp_random_graph(nodes, 0.05)
     log_print(inp_str='Graph created')
+
+    for node in range(0, nodes):
+        if g1.degree(node) == 0:
+            g1.remove_node(node)
+
+    log_print(inp_str='Nodes deleted', inp_obj=nodes-len(g1.nodes()))
 
     clear_seen(g1)
     log_print(inp_str='Edges initialized')
 
-    print_graph_csv(g1, 'Modularity gnpRandom')
+    print_graph_csv(g1, 'Modularity Random')
     log_print(inp_str='Graph saved to file')
 
-    # generate a corresponding random graph
-    log_print(inp_str='original degree', inp_obj=g1.degree())
-    copy_degrees = g1.degree()
-    # remove 0 vertex
-    new_dict = dict()
-    for vertex in copy_degrees:
-        print(copy_degrees[vertex])
-        if copy_degrees[vertex] != 0:
-            new_dict[vertex] = copy_degrees[vertex]
-    copy_degrees = new_dict
-    log_print(inp_str='copy', inp_obj=copy_degrees)
-
     # Compute the power set of all nodes
-    '''
     p_set = []
-
+    prg_bar = ProgressBar(size=math.pow(2, len(g1.nodes())), fraction=0.01, task_name='PowerSet')
     for curr_set in power_set(g1.nodes()):
-        p_set.append(curr_set)
+        try:
+            for node in curr_set:
+                for another in curr_set:
+                    for waypoint in nx.shortest_path(g1, node, another):
+                        if waypoint not in curr_set:
+                            raise nx.NetworkXNoPath
+
+            p_set.append(curr_set)
+            prg_bar.update(1)
+
+        except nx.NetworkXNoPath as e:
+            prg_bar.update(1)
+            # print(e)
+
     log_print('Power set computed')
+    log_print(inp_str='Power set size', inp_obj=len(p_set))
     p_set.sort()
     log_print('Power set sorted')
     pp = pprint.PrettyPrinter(indent=4)
 
     # Test print of the power set
-    pp.pprint(p_set)
+    # pp.pprint(p_set)
 
     log_print('Starting community detection')
-    results = detect_conductance(g1, p_set)
+    results = detect_modularity(g1, p_set)
     log_print('Finished detection')
-    results.sort(reverse=True)
+    results.sort(reverse=False)
     log_print('Finished sorting results')
     pp.pprint(results)
 
-    print(g1.nodes())
-    '''
+    # log_print(inp_str='Whole set of nodes', inp_obj=g1.nodes())
 
 # calc_conductance()
 calc_modularity()
